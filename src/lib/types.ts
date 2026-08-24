@@ -29,5 +29,4 @@ export interface Sheet {
   stagePos: { x: number; y: number };
   boxes: CropBox[];
   selectedBoxId: string | null;
-  lastBoxSize: { width: number; height: number } | null;
 }

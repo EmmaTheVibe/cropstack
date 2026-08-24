@@ -20,10 +20,10 @@ function App() {
     handleSelectSheet,
     handleTargetSizeChange,
     handleAddBox,
-    handleUpdateSelectedBox,
     handleRenameResult,
     handleClearSheetBoxes,
     handleDeleteResult,
+    handleClearResults,
     handleReset,
     handleCropThisSheet,
     handleCropAllSheets,
@@ -41,15 +41,14 @@ function App() {
         hasImage={!!activeSheet}
         targetSize={state.targetSize}
         boxCount={activeSheet?.boxes.length ?? 0}
+        sheetCount={state.sheets.length}
         hasAnySheetBoxes={hasAnySheetBoxes}
         selectedBox={selectedBox}
         isExporting={isExporting}
         hasExported={!!state.exportedResults}
         onTargetSizeChange={handleTargetSizeChange}
         onAddBox={handleAddBox}
-        onDuplicateSelected={() => dispatch({ type: 'DUPLICATE_SELECTED' })}
         onDeleteSelected={() => selectedBox && dispatch({ type: 'DELETE_BOX', id: selectedBox.id })}
-        onUpdateSelectedBox={handleUpdateSelectedBox}
         onClearSheetBoxes={handleClearSheetBoxes}
         onZoomIn={() => canvasRef.current?.zoomIn()}
         onZoomOut={() => canvasRef.current?.zoomOut()}
@@ -110,6 +109,7 @@ function App() {
           results={state.exportedResults}
           onRename={handleRenameResult}
           onDelete={handleDeleteResult}
+          onClearAll={handleClearResults}
         />
       </main>
     </div>

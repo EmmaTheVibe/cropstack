@@ -1,7 +1,6 @@
-import type { CropBox, Sheet } from '../lib/types';
+import type { CropBox } from '../lib/types';
 
 export const MIN_BOX_SIZE = 20; // image-space px
-export const DUPLICATE_OFFSET = 20; // image-space px
 
 export function clamp(value: number, min: number, max: number): number {
   return Math.min(Math.max(value, min), max);
@@ -36,15 +35,4 @@ export function reflowBoxToRatio(
   const x = cx - width / 2;
   const y = cy - height / 2;
   return clampBoxToImage({ ...box, x, y, width, height }, imageW, imageH);
-}
-
-export function computeDefaultBoxSize(
-  sheet: Sheet,
-  targetSize: { width: number; height: number },
-): { width: number; height: number } {
-  if (sheet.lastBoxSize) return sheet.lastBoxSize;
-  const ratio = targetSize.width / targetSize.height;
-  const width = Math.max(MIN_BOX_SIZE, sheet.naturalWidth * 0.15);
-  const height = width / ratio;
-  return { width, height };
 }

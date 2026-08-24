@@ -6,13 +6,14 @@ interface Props {
   results: ExportedCrop[] | null;
   onRename: (id: string, filename: string) => void;
   onDelete: (id: string) => void;
+  onClearAll: () => void;
 }
 
 function baseName(filename: string): string {
   return filename.replace(/\.jpg$/i, "");
 }
 
-export default function ExportPanel({ results, onRename, onDelete }: Props) {
+export default function ExportPanel({ results, onRename, onDelete, onClearAll }: Props) {
   useEffect(() => {
     return () => {
       results?.forEach((r) => URL.revokeObjectURL(r.previewUrl));
@@ -35,15 +36,20 @@ export default function ExportPanel({ results, onRename, onDelete }: Props) {
     <section className="export-panel">
       <div className="export-panel-header">
         <h2>Exported ({results.length})</h2>
-        <button
-          type="button"
-          className="w-fit"
-          onClick={handleDownloadAll}
-          disabled={duplicates.size > 0}
-          title={duplicates.size > 0 ? 'Rename duplicate filenames before downloading' : undefined}
-        >
-          Download All (.zip)
-        </button>
+        <div className="export-panel-actions">
+          <button
+            type="button"
+            className="w-fit"
+            onClick={handleDownloadAll}
+            disabled={duplicates.size > 0}
+            title={duplicates.size > 0 ? 'Rename duplicate filenames before downloading' : undefined}
+          >
+            Download All (.zip)
+          </button>
+          <button type="button" className="w-fit" onClick={onClearAll}>
+            Clear
+          </button>
+        </div>
       </div>
       {duplicates.size > 0 && (
         <p className="export-warning">

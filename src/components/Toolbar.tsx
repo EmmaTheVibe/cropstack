@@ -1,4 +1,4 @@
-import type { ChangeEvent } from "react";
+import { useState, type ChangeEvent } from "react";
 import type { CropBox, TargetSize } from "../lib/types";
 
 interface Props {
@@ -6,17 +6,14 @@ interface Props {
   hasImage: boolean;
   targetSize: TargetSize;
   boxCount: number;
+  sheetCount: number;
   hasAnySheetBoxes: boolean;
   selectedBox: CropBox | null;
   isExporting: boolean;
   hasExported: boolean;
   onTargetSizeChange: (width: number, height: number) => void;
   onAddBox: () => void;
-  onDuplicateSelected: () => void;
   onDeleteSelected: () => void;
-  onUpdateSelectedBox: (
-    changes: Partial<Pick<CropBox, "width" | "height">>,
-  ) => void;
   onClearSheetBoxes: () => void;
   onZoomIn: () => void;
   onZoomOut: () => void;
@@ -31,15 +28,14 @@ export default function Toolbar({
   hasImage,
   targetSize,
   boxCount,
+  sheetCount,
   hasAnySheetBoxes,
   selectedBox,
   isExporting,
   hasExported,
   onTargetSizeChange,
   onAddBox,
-  onDuplicateSelected,
   onDeleteSelected,
-  onUpdateSelectedBox,
   onClearSheetBoxes,
   onZoomIn,
   onZoomOut,
@@ -48,6 +44,8 @@ export default function Toolbar({
   onCropAllSheets,
   onReset,
 }: Props) {
+  const [isCropMenuOpen, setIsCropMenuOpen] = useState(false);
+
   function handleWidthChange(e: ChangeEvent<HTMLInputElement>) {
     const width = Number(e.target.value);
     if (width > 0) onTargetSizeChange(width, targetSize.height);
@@ -64,7 +62,7 @@ export default function Toolbar({
         <h3>Target Output Size</h3>
         <div className="input-row">
           <label>
-            W
+            W (px)
             <input
               type="number"
               min={1}
@@ -73,7 +71,7 @@ export default function Toolbar({
             />
           </label>
           <label>
-            H
+            H (px)
             <input
               type="number"
               min={1}
@@ -92,13 +90,6 @@ export default function Toolbar({
           </button>
           <button
             type="button"
-            onClick={onDuplicateSelected}
-            disabled={!selectedBox}
-          >
-            Duplicate
-          </button>
-          <button
-            type="button"
             onClick={onDeleteSelected}
             disabled={!selectedBox}
           >
@@ -113,34 +104,6 @@ export default function Toolbar({
         >
           Clear All Boxes
         </button>
-        {selectedBox && (
-          <div className="input-row">
-            <label>
-              W
-              <input
-                type="number"
-                min={1}
-                value={Math.round(selectedBox.width)}
-                onChange={(e) => {
-                  const width = Number(e.target.value);
-                  if (width > 0) onUpdateSelectedBox({ width });
-                }}
-              />
-            </label>
-            <label>
-              H
-              <input
-                type="number"
-                min={1}
-                value={Math.round(selectedBox.height)}
-                onChange={(e) => {
-                  const height = Number(e.target.value);
-                  if (height > 0) onUpdateSelectedBox({ height });
-                }}
-              />
-            </label>
-          </div>
-        )}
       </div>
 
       <div className="toolbar-section">
@@ -159,21 +122,52 @@ export default function Toolbar({
       </div>
 
       <div className="toolbar-section toolbar-section-bottom">
-        <button
-          type="button"
-          className="primary"
-          onClick={onCropThisSheet}
-          disabled={boxCount === 0 || isExporting || hasExported}
-        >
-          {isExporting ? "Cropping…" : "Crop This Sheet"}
-        </button>
-        <button
-          type="button"
-          onClick={onCropAllSheets}
-          disabled={!hasAnySheetBoxes || isExporting || hasExported}
-        >
-          {isExporting ? "Cropping…" : "Crop All Sheets"}
-        </button>
+        <div className="crop-menu-wrapper">
+          <button
+            type="button"
+            className="primary"
+            onClick={() => {
+              if (sheetCount > 1) {
+                setIsCropMenuOpen((open) => !open);
+              } else {
+                onCropThisSheet();
+              }
+            }}
+            disabled={!hasAnySheetBoxes || isExporting || hasExported}
+          >
+            {isExporting ? "Cropping…" : "Crop"}
+          </button>
+          {isCropMenuOpen && sheetCount > 1 && (
+            <>
+              <div
+                className="crop-menu-backdrop"
+                onClick={() => setIsCropMenuOpen(false)}
+              />
+              <div className="crop-menu">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setIsCropMenuOpen(false);
+                    onCropThisSheet();
+                  }}
+                  disabled={boxCount === 0}
+                >
+                  Crop This Sheet
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setIsCropMenuOpen(false);
+                    onCropAllSheets();
+                  }}
+                  disabled={!hasAnySheetBoxes}
+                >
+                  Crop All Sheets
+                </button>
+              </div>
+            </>
+          )}
+        </div>
         <button type="button" onClick={onReset} disabled={!hasImage}>
           Reset
         </button>

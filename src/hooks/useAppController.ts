@@ -1,6 +1,6 @@
 import { useReducer, useRef, useState } from 'react';
 import type { ImageCanvasHandle } from '../components/image-canvas/ImageCanvas';
-import { appReducer, computeDefaultBoxSize, getActiveSheet, initialAppState } from '../state';
+import { appReducer, getActiveSheet, initialAppState } from '../state';
 import { cropAllSheets, cropSheetBoxes } from '../lib/cropExport';
 import type { CropBox, ExportedCrop, Sheet } from '../lib/types';
 
@@ -42,7 +42,6 @@ export function useAppController() {
       stagePos: { x: 0, y: 0 },
       boxes: [],
       selectedBoxId: null,
-      lastBoxSize: null,
     }));
     dispatch({ type: 'ADD_SHEETS', sheets });
   }
@@ -63,33 +62,15 @@ export function useAppController() {
 
   function handleAddBox() {
     if (!activeSheet) return;
-    const size = computeDefaultBoxSize(activeSheet, state.targetSize);
+    const { width, height } = state.targetSize;
     const box: CropBox = {
       id: crypto.randomUUID(),
-      x: (activeSheet.naturalWidth - size.width) / 2,
-      y: (activeSheet.naturalHeight - size.height) / 2,
-      width: size.width,
-      height: size.height,
+      x: (activeSheet.naturalWidth - width) / 2,
+      y: (activeSheet.naturalHeight - height) / 2,
+      width,
+      height,
     };
     dispatch({ type: 'ADD_BOX', box });
-  }
-
-  function handleUpdateSelectedBox(changes: Partial<Pick<CropBox, 'width' | 'height'>>) {
-    if (!selectedBox) return;
-    const ratio = state.targetSize.width / state.targetSize.height;
-    if (changes.width) {
-      dispatch({
-        type: 'UPDATE_BOX',
-        id: selectedBox.id,
-        changes: { width: changes.width, height: changes.width / ratio },
-      });
-    } else if (changes.height) {
-      dispatch({
-        type: 'UPDATE_BOX',
-        id: selectedBox.id,
-        changes: { width: changes.height * ratio, height: changes.height },
-      });
-    }
   }
 
   function handleRenameResult(id: string, filename: string) {
@@ -108,6 +89,11 @@ export function useAppController() {
     const result = state.exportedResults?.find((r) => r.id === id);
     if (result) URL.revokeObjectURL(result.previewUrl);
     dispatch({ type: 'DELETE_EXPORT_RESULT', id });
+  }
+
+  function handleClearResults() {
+    revokeResults(state.exportedResults);
+    dispatch({ type: 'CLEAR_EXPORT_RESULTS' });
   }
 
   function handleReset() {
@@ -154,10 +140,10 @@ export function useAppController() {
     handleSelectSheet,
     handleTargetSizeChange,
     handleAddBox,
-    handleUpdateSelectedBox,
     handleRenameResult,
     handleClearSheetBoxes,
     handleDeleteResult,
+    handleClearResults,
     handleReset,
     handleCropThisSheet,
     handleCropAllSheets,

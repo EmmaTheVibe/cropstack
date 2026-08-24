@@ -1,5 +1,5 @@
 import type { CropBox, Sheet } from '../lib/types';
-import { clampBoxToImage, DUPLICATE_OFFSET, reflowBoxToRatio } from './geometry';
+import { clampBoxToImage, reflowBoxToRatio } from './geometry';
 import { initialAppState } from './initialState';
 import type { Action, AppState } from './types';
 
@@ -44,46 +44,18 @@ export function appReducer(state: AppState, action: Action): AppState {
           ...sheet,
           boxes: [...sheet.boxes, box],
           selectedBoxId: box.id,
-          lastBoxSize: { width: box.width, height: box.height },
-        };
-      });
-
-    case 'DUPLICATE_SELECTED':
-      return updateActiveSheet(state, (sheet) => {
-        const source = sheet.boxes.find((b) => b.id === sheet.selectedBoxId);
-        if (!source) return sheet;
-        const clone = clampBoxToImage(
-          {
-            ...source,
-            id: crypto.randomUUID(),
-            x: source.x + DUPLICATE_OFFSET,
-            y: source.y + DUPLICATE_OFFSET,
-          },
-          sheet.naturalWidth,
-          sheet.naturalHeight,
-        );
-        return {
-          ...sheet,
-          boxes: [...sheet.boxes, clone],
-          selectedBoxId: clone.id,
-          lastBoxSize: { width: clone.width, height: clone.height },
         };
       });
 
     case 'UPDATE_BOX':
-      return updateActiveSheet(state, (sheet) => {
-        const boxes = sheet.boxes.map((b) =>
+      return updateActiveSheet(state, (sheet) => ({
+        ...sheet,
+        boxes: sheet.boxes.map((b) =>
           b.id === action.id
             ? clampBoxToImage({ ...b, ...action.changes }, sheet.naturalWidth, sheet.naturalHeight)
             : b,
-        );
-        const updated = boxes.find((b) => b.id === action.id);
-        return {
-          ...sheet,
-          boxes,
-          lastBoxSize: updated ? { width: updated.width, height: updated.height } : sheet.lastBoxSize,
-        };
-      });
+        ),
+      }));
 
     case 'DELETE_BOX':
       return updateActiveSheet(state, (sheet) => ({
@@ -97,7 +69,7 @@ export function appReducer(state: AppState, action: Action): AppState {
       if (!active) return state;
       const clearedIds = new Set(active.boxes.map((b) => b.id));
       const sheets = state.sheets.map((s) =>
-        s.id === active.id ? { ...s, boxes: [], selectedBoxId: null, lastBoxSize: null } : s,
+        s.id === active.id ? { ...s, boxes: [], selectedBoxId: null } : s,
       );
       const remaining = state.exportedResults?.filter((r) => !clearedIds.has(r.id)) ?? null;
       return {
@@ -121,6 +93,17 @@ export function appReducer(state: AppState, action: Action): AppState {
       };
     }
 
+    case 'CLEAR_EXPORT_RESULTS': {
+      if (!state.exportedResults) return state;
+      const clearedIds = new Set(state.exportedResults.map((r) => r.id));
+      const sheets = state.sheets.map((s) => ({
+        ...s,
+        boxes: s.boxes.filter((b) => !clearedIds.has(b.id)),
+        selectedBoxId: s.selectedBoxId && clearedIds.has(s.selectedBoxId) ? null : s.selectedBoxId,
+      }));
+      return { ...state, sheets, exportedResults: null };
+    }
+
     case 'SELECT_BOX':
       return updateActiveSheet(state, (sheet) => ({ ...sheet, selectedBoxId: action.id }));
 
@@ -131,9 +114,6 @@ export function appReducer(state: AppState, action: Action): AppState {
         boxes: sheet.boxes.map((b: CropBox) =>
           reflowBoxToRatio(b, ratio, sheet.naturalWidth, sheet.naturalHeight),
         ),
-        lastBoxSize: sheet.lastBoxSize
-          ? { width: sheet.lastBoxSize.width, height: sheet.lastBoxSize.width / ratio }
-          : null,
       }));
       return { ...state, targetSize: { width: action.width, height: action.height }, sheets };
     }
