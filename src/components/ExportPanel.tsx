@@ -1,6 +1,16 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
+import { FolderArchive } from "lucide-react";
 import type { ExportedCrop } from "../lib/types";
-import { downloadAsZip, downloadSingle, findDuplicateFilenames } from "../lib/zipDownload";
+import {
+  downloadAsZip,
+  downloadSingle,
+  findDuplicateFilenames,
+} from "../lib/zipDownload";
+import {
+  isFolderSaveSupported,
+  pickSaveFolder,
+  saveToFolder,
+} from "../lib/saveToFolder";
 
 interface Props {
   results: ExportedCrop[] | null;
@@ -13,7 +23,14 @@ function baseName(filename: string): string {
   return filename.replace(/\.jpg$/i, "");
 }
 
-export default function ExportPanel({ results, onRename, onDelete, onClearAll }: Props) {
+export default function ExportPanel({
+  results,
+  onRename,
+  onDelete,
+  onClearAll,
+}: Props) {
+  const [isSavingToFolder, setIsSavingToFolder] = useState(false);
+
   useEffect(() => {
     return () => {
       results?.forEach((r) => URL.revokeObjectURL(r.previewUrl));
@@ -32,6 +49,19 @@ export default function ExportPanel({ results, onRename, onDelete, onClearAll }:
     }
   }
 
+  async function handleSaveToFolder() {
+    setIsSavingToFolder(true);
+    try {
+      const dirHandle = await pickSaveFolder();
+      await saveToFolder(dirHandle, results!);
+    } catch (err) {
+      if (err instanceof Error && err.name === "AbortError") return;
+      alert(err instanceof Error ? err.message : String(err));
+    } finally {
+      setIsSavingToFolder(false);
+    }
+  }
+
   return (
     <section className="export-panel">
       <div className="export-panel-header">
@@ -39,13 +69,33 @@ export default function ExportPanel({ results, onRename, onDelete, onClearAll }:
         <div className="export-panel-actions">
           <button
             type="button"
-            className="w-fit"
+            className="w-fit icon-text-button"
             onClick={handleDownloadAll}
             disabled={duplicates.size > 0}
-            title={duplicates.size > 0 ? 'Rename duplicate filenames before downloading' : undefined}
+            title={
+              duplicates.size > 0
+                ? "Rename duplicate filenames before downloading"
+                : "Download All (.zip)"
+            }
           >
-            Download All (.zip)
+            <FolderArchive size={16} />
+            Zip
           </button>
+          {isFolderSaveSupported() && (
+            <button
+              type="button"
+              className="w-fit"
+              onClick={handleSaveToFolder}
+              disabled={duplicates.size > 0 || isSavingToFolder}
+              title={
+                duplicates.size > 0
+                  ? "Rename duplicate filenames before saving"
+                  : undefined
+              }
+            >
+              {isSavingToFolder ? "Saving…" : "Save to Folder"}
+            </button>
+          )}
           <button type="button" className="w-fit" onClick={onClearAll}>
             Clear
           </button>
@@ -53,7 +103,8 @@ export default function ExportPanel({ results, onRename, onDelete, onClearAll }:
       </div>
       {duplicates.size > 0 && (
         <p className="export-warning">
-          Duplicate filenames: {[...duplicates].join(', ')} — rename before downloading the zip.
+          Duplicate filenames: {[...duplicates].join(", ")} — rename before
+          exporting.
         </p>
       )}
       <div className="export-grid">
@@ -72,7 +123,9 @@ export default function ExportPanel({ results, onRename, onDelete, onClearAll }:
               <div className="export-thumb-name">
                 <input
                   type="text"
-                  className={duplicates.has(r.filename) ? 'duplicate' : undefined}
+                  className={
+                    duplicates.has(r.filename) ? "duplicate" : undefined
+                  }
                   value={baseName(r.filename)}
                   onChange={(e) => onRename(r.id, `${e.target.value}.jpg`)}
                 />

@@ -79,6 +79,16 @@ export function appReducer(state: AppState, action: Action): AppState {
       };
     }
 
+    case 'ROTATE_SHEET':
+      return updateActiveSheet(state, (sheet) => ({
+        ...sheet,
+        image: action.image,
+        imageUrl: action.imageUrl,
+        naturalWidth: action.naturalWidth,
+        naturalHeight: action.naturalHeight,
+        boxes: action.boxes,
+      }));
+
     case 'DELETE_EXPORT_RESULT': {
       const remaining = state.exportedResults?.filter((r) => r.id !== action.id) ?? null;
       const sheets = state.sheets.map((s) => ({

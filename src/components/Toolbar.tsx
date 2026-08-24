@@ -1,4 +1,5 @@
 import { useState, type ChangeEvent } from "react";
+import { RotateCw } from "lucide-react";
 import type { CropBox, TargetSize } from "../lib/types";
 
 interface Props {
@@ -18,6 +19,7 @@ interface Props {
   onZoomIn: () => void;
   onZoomOut: () => void;
   onFitToScreen: () => void;
+  onRotateSheet: () => void;
   onCropThisSheet: () => void;
   onCropAllSheets: () => void;
   onReset: () => void;
@@ -40,6 +42,7 @@ export default function Toolbar({
   onZoomIn,
   onZoomOut,
   onFitToScreen,
+  onRotateSheet,
   onCropThisSheet,
   onCropAllSheets,
   onReset,
@@ -57,7 +60,7 @@ export default function Toolbar({
   }
 
   return (
-    <aside className={`toolbar${className ? ` ${className}` : ''}`}>
+    <aside className={`toolbar${className ? ` ${className}` : ""}`}>
       <div className="toolbar-section">
         <h3>Target Output Size</h3>
         <div className="input-row">
@@ -117,6 +120,22 @@ export default function Toolbar({
           </button>
           <button type="button" onClick={onZoomIn} disabled={!hasImage}>
             +
+          </button>
+        </div>
+      </div>
+
+      <div className="toolbar-section">
+        <h3>Adjust</h3>
+        <div className="button-row ">
+          <button
+            type="button"
+            className="icon-button"
+            onClick={onRotateSheet}
+            disabled={!hasImage}
+            aria-label="Rotate sheet"
+            title="Rotate sheet"
+          >
+            <RotateCw size={16} />
           </button>
         </div>
       </div>

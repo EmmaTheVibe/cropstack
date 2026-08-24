@@ -22,6 +22,7 @@ function App() {
     handleAddBox,
     handleRenameResult,
     handleClearSheetBoxes,
+    handleRotateSheet,
     handleDeleteResult,
     handleClearResults,
     handleReset,
@@ -53,6 +54,7 @@ function App() {
         onZoomIn={() => canvasRef.current?.zoomIn()}
         onZoomOut={() => canvasRef.current?.zoomOut()}
         onFitToScreen={() => canvasRef.current?.fitToScreen()}
+        onRotateSheet={handleRotateSheet}
         onCropThisSheet={handleCropThisSheet}
         onCropAllSheets={handleCropAllSheets}
         onReset={handleReset}

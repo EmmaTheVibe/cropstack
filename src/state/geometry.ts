@@ -36,3 +36,14 @@ export function reflowBoxToRatio(
   const y = cy - height / 2;
   return clampBoxToImage({ ...box, x, y, width, height }, imageW, imageH);
 }
+
+/** Maps a box through a 90° clockwise rotation of its image (originalImageHeight = pre-rotation image height). */
+export function rotateBox90(box: CropBox, originalImageHeight: number): CropBox {
+  return {
+    ...box,
+    x: originalImageHeight - box.y - box.height,
+    y: box.x,
+    width: box.height,
+    height: box.width,
+  };
+}

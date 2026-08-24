@@ -19,6 +19,14 @@ export type Action =
     }
   | { type: 'DELETE_BOX'; id: string }
   | { type: 'CLEAR_SHEET_BOXES' }
+  | {
+      type: 'ROTATE_SHEET';
+      image: HTMLImageElement;
+      imageUrl: string;
+      naturalWidth: number;
+      naturalHeight: number;
+      boxes: CropBox[];
+    }
   | { type: 'DELETE_EXPORT_RESULT'; id: string }
   | { type: 'CLEAR_EXPORT_RESULTS' }
   | { type: 'SELECT_BOX'; id: string | null }

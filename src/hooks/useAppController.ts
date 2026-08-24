@@ -1,7 +1,9 @@
 import { useReducer, useRef, useState } from 'react';
 import type { ImageCanvasHandle } from '../components/image-canvas/ImageCanvas';
 import { appReducer, getActiveSheet, initialAppState } from '../state';
+import { rotateBox90 } from '../state/geometry';
 import { cropAllSheets, cropSheetBoxes } from '../lib/cropExport';
+import { rotateImage90 } from '../lib/rotateImage';
 import type { CropBox, ExportedCrop, Sheet } from '../lib/types';
 
 function revokeResults(results: ExportedCrop[] | null | undefined) {
@@ -91,6 +93,21 @@ export function useAppController() {
     dispatch({ type: 'DELETE_EXPORT_RESULT', id });
   }
 
+  async function handleRotateSheet() {
+    if (!activeSheet) return;
+    const { image, imageUrl } = await rotateImage90(activeSheet.image);
+    URL.revokeObjectURL(activeSheet.imageUrl);
+    const boxes = activeSheet.boxes.map((b) => rotateBox90(b, activeSheet.naturalHeight));
+    dispatch({
+      type: 'ROTATE_SHEET',
+      image,
+      imageUrl,
+      naturalWidth: activeSheet.naturalHeight,
+      naturalHeight: activeSheet.naturalWidth,
+      boxes,
+    });
+  }
+
   function handleClearResults() {
     revokeResults(state.exportedResults);
     dispatch({ type: 'CLEAR_EXPORT_RESULTS' });
@@ -142,6 +159,7 @@ export function useAppController() {
     handleAddBox,
     handleRenameResult,
     handleClearSheetBoxes,
+    handleRotateSheet,
     handleDeleteResult,
     handleClearResults,
     handleReset,

@@ -104,10 +104,16 @@ export function useStageZoom({
 
   useEffect(() => {
     if (!sourceImage || containerSize.width === 0 || containerSize.height === 0) return;
+    fitToScreen();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [sourceImage]);
+
+  useEffect(() => {
+    if (!sourceImage || containerSize.width === 0 || containerSize.height === 0) return;
     if (hasBoxes) return;
     fitToScreen();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [sourceImage, containerSize.width, containerSize.height]);
+  }, [containerSize.width, containerSize.height]);
 
   return {
     fitToScreen,
