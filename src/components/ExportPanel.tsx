@@ -19,8 +19,16 @@ interface Props {
   onClearAll: () => void;
 }
 
+const NAME_PATTERN = /^\d{10}$/;
+// const NAME_PATTERN = /^.{1,30}$/;
+
+
 function baseName(filename: string): string {
   return filename.replace(/\.jpg$/i, "");
+}
+
+function isValidName(filename: string): boolean {
+  return NAME_PATTERN.test(baseName(filename));
 }
 
 export default function ExportPanel({
@@ -40,6 +48,8 @@ export default function ExportPanel({
   if (!results || results.length === 0) return null;
 
   const duplicates = new Set(findDuplicateFilenames(results));
+  const invalidCount = results.filter((r) => !isValidName(r.filename)).length;
+  const hasBlockingIssues = duplicates.size > 0 || invalidCount > 0;
 
   async function handleDownloadAll() {
     try {
@@ -71,10 +81,10 @@ export default function ExportPanel({
             type="button"
             className="w-fit icon-text-button"
             onClick={handleDownloadAll}
-            disabled={duplicates.size > 0}
+            disabled={hasBlockingIssues}
             title={
-              duplicates.size > 0
-                ? "Rename duplicate filenames before downloading"
+              hasBlockingIssues
+                ? "Fix duplicate or invalid filenames before downloading"
                 : "Download All (.zip)"
             }
           >
@@ -86,10 +96,10 @@ export default function ExportPanel({
               type="button"
               className="w-fit"
               onClick={handleSaveToFolder}
-              disabled={duplicates.size > 0 || isSavingToFolder}
+              disabled={hasBlockingIssues || isSavingToFolder}
               title={
-                duplicates.size > 0
-                  ? "Rename duplicate filenames before saving"
+                hasBlockingIssues
+                  ? "Fix duplicate or invalid filenames before saving"
                   : undefined
               }
             >
@@ -107,39 +117,49 @@ export default function ExportPanel({
           exporting.
         </p>
       )}
+      {invalidCount > 0 && (
+        <p className="export-warning">
+          {invalidCount} name{invalidCount === 1 ? "" : "s"} must be exactly
+          10 digits before exporting.
+        </p>
+      )}
       <div className="export-grid">
-        {results.map((r) => (
-          <div key={r.id} className="export-thumb">
-            <button
-              type="button"
-              className="export-thumb-delete"
-              onClick={() => onDelete(r.id)}
-              aria-label={`Remove ${r.filename}`}
-            >
-              ×
-            </button>
-            <img src={r.previewUrl} alt={r.filename} />
-            <div className="export-thumb-footer">
-              <div className="export-thumb-name">
-                <input
-                  type="text"
-                  className={
-                    duplicates.has(r.filename) ? "duplicate" : undefined
-                  }
-                  value={baseName(r.filename)}
-                  onChange={(e) => onRename(r.id, `${e.target.value}.jpg`)}
-                />
-                <span>.jpg</span>
-              </div>
+        {results.map((r) => {
+          const invalid = !isValidName(r.filename);
+          return (
+            <div key={r.id} className="export-thumb">
               <button
                 type="button"
-                onClick={() => downloadSingle(r.blob, r.filename)}
+                className="export-thumb-delete"
+                onClick={() => onDelete(r.id)}
+                aria-label={`Remove ${r.filename}`}
               >
-                Download
+                ×
               </button>
+              <img src={r.previewUrl} alt={r.filename} />
+              <div className="export-thumb-footer">
+                <div className="export-thumb-name">
+                  <input
+                    type="text"
+                    className={
+                      invalid || duplicates.has(r.filename) ? "invalid" : undefined
+                    }
+                    value={baseName(r.filename)}
+                    onChange={(e) => onRename(r.id, `${e.target.value}.jpg`)}
+                  />
+                  <span>.jpg</span>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => downloadSingle(r.blob, r.filename)}
+                  disabled={invalid}
+                >
+                  Download
+                </button>
+              </div>
             </div>
-          </div>
-        ))}
+          );
+        })}
       </div>
     </section>
   );

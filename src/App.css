@@ -377,7 +377,7 @@ button.primary:hover:not(:disabled) {
   flex-shrink: 0;
 }
 
-.export-thumb-name input.duplicate {
+.export-thumb-name input.invalid {
   border-color: #e5484d;
   outline-color: #e5484d;
 }
